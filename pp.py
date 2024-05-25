@@ -1,7 +1,8 @@
+import streamlit as st
 import numpy as np
 import pandas as pd
 import yfinance as yf
-import streamlit as st
+from yahoo_fin import stock_info as si
 import matplotlib.pyplot as plt
 from ta.trend import SMAIndicator, EMAIndicator
 from ta.momentum import RSIIndicator
@@ -15,6 +16,15 @@ from arch import arch_model
 def get_stock_data(symbol, start_date, end_date):
     data = yf.download(symbol, start=start_date, end=end_date)
     return data
+
+# Function to fetch all available stock symbols from Yahoo Finance
+@st.cache_data
+def get_all_stock_symbols():
+    sp500 = si.tickers_sp500()
+    nasdaq = si.tickers_nasdaq()
+    dow = si.tickers_dow()
+    all_symbols = list(set(sp500 + nasdaq + dow))
+    return all_symbols
 
 # Function to calculate VIX index
 def calculate_vix(data):
@@ -99,13 +109,38 @@ def display_volatility_forecast(future_volatility):
     for insight in insights:
         st.write(insight)
 
-# Function to perform correlation analysis
+# Function to perform correlation analysis and generate insights
 def perform_correlation_analysis(data):
     st.subheader("Correlation Analysis:")
     st.write("You can perform correlation analysis between different technical indicators, such as SMA, EMA, RSI, and Bollinger Bands, to identify potential trends or patterns in the data.")
     correlation_matrix = data[['Close', 'Volume', 'SMA_20', 'EMA_20', 'RSI_14', 'BB_upper', 'BB_lower']].corr()
     st.write("Correlation Matrix:")
     st.write(correlation_matrix)
+
+    # Generate insights from correlation analysis
+    insights = generate_correlation_insights(correlation_matrix)
+    st.subheader("Correlation Analysis Insights")
+    for insight in insights:
+        st.write(insight)
+
+# Function to generate insights from correlation analysis
+def generate_correlation_insights(correlation_matrix):
+    insights = []
+
+    # Example insights based on correlation analysis
+    if correlation_matrix['Close']['SMA_20'] > 0.5:
+        insights.append("Strong positive correlation between price and SMA_20 indicates a clear trend.")
+    else:
+        insights.append("Price and SMA_20 are not strongly correlated.")
+
+    if correlation_matrix['Close']['RSI_14'] < -0.3:
+        insights.append("Negative correlation between price and RSI_14 suggests potential divergence in momentum.")
+    else:
+        insights.append("Price and RSI_14 are not strongly negatively correlated.")
+
+    # Add more insights based on other correlations if needed
+
+    return insights
 
 # Function to analyze news sentiment
 def analyze_news_sentiment(news_text):
@@ -152,14 +187,24 @@ def analyze_market_volatility(vix):
 
 # Main function to run the Streamlit app
 def main():
-    st.title("Financial Market Volatility Analysis ")
+    st.title("Financial Market Volatility Analysis")
     
     # Date range selection
     start_date = st.date_input("Start Date", datetime(2021, 1, 1))
     end_date = st.date_input("End Date", datetime.now())
     
-    # Symbol input
-    symbol = st.text_input("Enter Stock Symbol", "AAPL")
+    # Dropdown menu for selecting stock symbol
+    all_stock_symbols = get_all_stock_symbols()
+    selected_symbol = st.selectbox("Enter Stock Symbol", all_stock_symbols)
+    
+    # Additional input field for custom stock symbols
+    custom_symbol = st.text_input("Or Enter Custom Stock Symbol", "")
+    
+    # Determine the symbol to use
+    symbol = custom_symbol if custom_symbol else selected_symbol
+    
+    # Show selected symbol
+    st.write("Selected Stock Symbol:", symbol)
     
     # Fetch stock data
     data = get_stock_data(symbol, start_date, end_date)
@@ -219,3 +264,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

@@ -3,7 +3,6 @@ pandas
 yfinance
 streamlit
 matplotlib
-pyplot
 ta
 textblob
 datetime

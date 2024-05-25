@@ -152,7 +152,7 @@ def analyze_market_volatility(vix):
 
 # Main function to run the Streamlit app
 def main():
-    st.title("Financial Market Volatility Analysis App")
+    st.title("Financial Market Volatility Analysis ")
     
     # Date range selection
     start_date = st.date_input("Start Date", datetime(2021, 1, 1))
